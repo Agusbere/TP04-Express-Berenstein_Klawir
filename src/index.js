@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { sumar, restar, multiplicar, dividir } from "./modules/matematica.js";
 import { OMDBSearchByPage, OMDBSearchComplete, OMDBGetByImdbID } from "./modules/omdb-wrapper.js";
-
+import Alumno, { alumnosArray } from "./models/alumno.js";
 const app = express();
 
 const port = 3000; // El puerto 3000 (http://localhost:3000)
@@ -96,23 +96,14 @@ app.get("/matematica/dividir", (req, res) => {
 app.get("/omdb/searchbypage", async (req, res) => {
   const { search, p } = req.query;
 
-  if (!search || !p || isNaN(p)) {
-    return res.status(400).json({
-      respuesta: false,
-      mensaje: "Parámetros inválidos. Debés enviar 'search' y 'p' (número).",
-      datos: [],
-    });
-  }
-
   try {
     let resultado = await OMDBSearchByPage(search, parseInt(p));
 
     return res.status(200).json({
       respuesta: resultado.respuesta,
-      datos: resultado.respuesta ? resultado.datos : [], 
+      datos: resultado.respuesta ? resultado.datos : [],
     });
   } catch (error) {
-    console.error("Error en /omdb/searchbypage:", error);
     return res.status(500).json({
       respuesta: false,
       mensaje: "Error interno del servidor",
@@ -120,6 +111,68 @@ app.get("/omdb/searchbypage", async (req, res) => {
     });
   }
 });
+
+app.get("/omdb/searchcomplete", async (req, res) => {
+  const { search } = req.query;
+  try {
+    let resultado = await OMDBSearchComplete(search)
+    return res.status(200).json({
+      respuesta: resultado.respuesta,
+      datos: resultado.respuesta ? resultado.datos : [],
+    });
+  } catch (error) {
+    return res.status(500).json({
+      respuesta: false,
+      mensaje: "Error interno del servidor",
+      datos: [],
+    });
+  }
+});
+
+app.get("/omdb/searchbyid", async (req, res) => {
+  const { imdbID } = req.query;
+  try {
+    let resultado = await OMDBGetByImdbID(imdbID)
+    return res.status(200).json({
+      respuesta: resultado.respuesta,
+      datos: resultado.respuesta ? resultado.datos : [],
+    });
+  } catch (error) {
+    return res.status(500).json({
+      respuesta: false,
+      mensaje: "Error interno del servidor",
+      datos: [],
+    });
+  }
+});
+
+app.get("/alumnos/:dni", (req, res) => {
+  const { dni } = req.params;
+
+  const alumno = alumnosArray.find((alumnoABuscar) => alumnoABuscar.DNI === dni);
+
+  if (alumno) {
+    res.status(200).json({ alumno });
+  } else {
+    res.status(404).json({
+      mensaje: `No se encontró un alumno con el DNI ${dni}`,
+    });
+  }
+});
+
+app.get("/alumnos", (req, res) => {
+  const { username, dni, edad } = req.body;
+
+  const nuevoAlumno = new Alumno(username, dni, edad);
+  alumnosArray.push(nuevoAlumno);
+
+  res.status(201).json({
+    mensaje: "Alumno agregado exitosamente.",
+    datos: nuevoAlumno
+  });
+});
+
+
 
 
 app.listen(port, () => {
