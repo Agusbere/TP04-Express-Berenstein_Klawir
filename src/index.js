@@ -146,6 +146,12 @@ app.get("/omdb/searchbyid", async (req, res) => {
   }
 });
 
+app.get("/alumnos", (req, res) => {
+  res.status(200).json({
+    datos: alumnosArray,
+  });
+});
+
 app.get("/alumnos/:dni", (req, res) => {
   const { dni } = req.params;
 
@@ -160,7 +166,7 @@ app.get("/alumnos/:dni", (req, res) => {
   }
 });
 
-app.get("/alumnos", (req, res) => {
+app.post("/alumnos", (req, res) => {
   const { username, dni, edad } = req.body;
 
   const nuevoAlumno = new Alumno(username, dni, edad);
@@ -173,6 +179,22 @@ app.get("/alumnos", (req, res) => {
 });
 
 
+app.delete("/alumnos", (req, res) => {
+  const { dni } = req.body;
+  const index = alumnosArray.findIndex((alumno) => alumno.DNI === dni);
+
+  if (index === -1) {
+    return res.status(404).json({
+      mensaje: "No se encontró un alumno con ese DNI.",
+    });
+  }
+
+  alumnosArray.splice(index, 1);
+
+  return res.status(200).json({
+    mensaje: "Alumno eliminado exitosamente.",
+  });
+});
 
 
 app.listen(port, () => {
